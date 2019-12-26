@@ -22,12 +22,12 @@ public:
 	int GetSize();
 };
 
-Stack::Stack(){
+Stack::Stack() {
 	top = NULL;
 	size = 0;
 }
 
-void Stack::Push(double value){
+void Stack::Push(double value) {
 	Node *node = new Node;
 	node->value = value;
 	node->next = top;
@@ -35,21 +35,21 @@ void Stack::Push(double value){
 	size++;
 }
 
-void Stack::Pop(){
+void Stack::Pop() {
 	Node *tmp = top;
 	top = top->next;
 	delete tmp;
 	size--;
 }
 
-double Stack::Top(){
+double Stack::Top() {
 	return top->value;
 }
 
-bool Stack::IsEmpty(){
+bool Stack::IsEmpty() {
 	return top == NULL;
 }
 
-int Stack::GetSize(){
+int Stack::GetSize() {
 	return size;
 }
