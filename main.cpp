@@ -6,7 +6,7 @@ using namespace std;
 
 int main(){
 	Calc calc;
-	while(1){
+	while(true){
 		cout << ">";
 		string s;
 		getline(cin, s);
