@@ -6,13 +6,14 @@ using namespace std;
 
 int main(){
 	Calc calc;
-	while(true){
+	while(1){
 		cout << ">";
 		string s;
 		getline(cin, s);
 		
-		if(s == "quit")
+		if (s == "quit")
 			break;
+
 		calc.ProcessCommand(s);
 	}
 }
