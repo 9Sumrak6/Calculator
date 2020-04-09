@@ -6,6 +6,7 @@ using namespace std;
 
 int main(){
 	Calc calc;
+	calc.Help();
 	while(true){
 		cout << ">";
 		string s;

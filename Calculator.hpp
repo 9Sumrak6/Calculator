@@ -16,7 +16,7 @@ class Calc{
 		double value;
 	};
 	
-	struct  UserFunction{
+	struct UserFunction{
 		string name;
 		string arg;
 		vector<string> pol;
@@ -42,14 +42,13 @@ class Calc{
 	double CalcFunction(string op, double a);
 	double CalcUserFunction(string op, double a);
 	double CalcOperator(string op, double a, double b);
+	double CalcConst(string name);
 	double Calculate(vector<string> &rpn);
 	
 	int Priority(string op);
 	
-	double CalcConst(string name, double a);
 	bool IsConst(string name);
 
-	void Help();
 	void State();
 	bool IsAdd(string lexeme, string lexemes1);
 	void ProcessAdd(vector<string> &lexemes);
@@ -57,6 +56,7 @@ class Calc{
 	void ProcessMode(vector<string> &lexemes);
 	void ProcessDef(vector<string> &lexemes);
 public:	
+	void Help();
 	vector<string> GetRPN(vector<string> lexemes);
 	void ProcessCommand(string cmd);
 };	
@@ -113,17 +113,21 @@ bool Calc::IsFunc(string op) {
 }
 
 bool Calc::IsIdentifier(string var){
-	if (IsFunc(var))
+	if (IsFunc(var) || IsConst(var))
 		return false;
 	
 	for(int i = 0; i < var.length(); i++){
 		bool isDigit = var[i] >= '0' && var[i] <= '9';
 		bool isLetter = (var[i] >= 'a' && var[i] <= 'z') || (var[i] >= 'A' && var[i] <= 'Z');
-		if (!isDigit && !isLetter || IsConstPI(var) || IsConstE(var))
+		if (!isDigit && !isLetter)
 			return false;
 	}
 
 	return true;
+}
+
+bool Calc::IsConst(string name){
+	return name == "pi" || name == "e";
 }
 
 double Calc::GetVariableValue(string name) {
@@ -171,11 +175,11 @@ double Calc::CalcFunction(string name, double a) {
 double Calc::CalcConst(string name) {
 	if (name == "pi")
 		return M_PI;
-	return M_E;
-}
 
-bool Calc::IsConstPI(string name){
-	return name == "pi" || name == "e";
+	if (name == "e")
+		return M_E;
+
+	throw string("unknown constant '") + name + "'";
 }
 
 double Calc::CalcUserFunction(string name, double a){
@@ -220,7 +224,7 @@ double Calc::Calculate(vector<string> &rpn) {
 			stack.Push(stod(rpn[i])); 
 		}
 		else if (IsConst(rpn[i])){
-			stack.Push(CalcConst(name)); 
+			stack.Push(CalcConst(rpn[i])); 
 		}
 		else if (IsOperator(rpn[i])) {
 			if (stack.GetSize() < 2) 
@@ -322,10 +326,15 @@ void Calc::State() {
 }
 
 bool Calc::IsAdd(string lex1, string lex2){
-	if ((IsNumber(lex1) && (IsVariable(lex2) || IsUserFunc(lex2) || IsFunc(lex2) || lex2 == "(")))
+	if (((IsNumber(lex1) || IsConst(lex1)) && (IsVariable(lex2) || IsUserFunc(lex2) || IsFunc(lex2) || lex2 == "(")))
 		return true;
-	if ( ( (IsUserFunc(lex1) || IsVariable(lex1) || lex1 == ")") && (IsUserFunc(lex2) || IsFunc(lex2) || IsVariable(lex2) || lex2 == "(") ) )
+
+	if (lex1 == ")" && lex2 == "(")
 		return true;
+
+	if (IsVariable(lex1) && IsVariable(lex2))
+		return true;
+
 	return false;
 }
 
@@ -435,20 +444,21 @@ vector<string> Calc::GetRPN(vector<string> lexemes){
 	vector<string> rpn;
 	stack<string> stack;
 	bool IsUnary = true;
+
 	for (int i = 0; i < lexemes.size(); i++){
-		if(IsFunc(lexemes[i]) || IsUserFunc(lexemes[i])) {
+		if (IsFunc(lexemes[i]) || IsUserFunc(lexemes[i])) {
 			stack.push(lexemes[i]);
 			IsUnary = true;
 		}
-		else if(IsNumber(lexemes[i]) || IsIdentifier(lexemes[i])) {
+		else if (IsNumber(lexemes[i]) || IsIdentifier(lexemes[i]) || IsConst(lexemes[i])) {
 			rpn.push_back(lexemes[i]);
 			IsUnary = false;
 		}
-		else if(lexemes[i] == "(") {	
+		else if (lexemes[i] == "(") {	
 			stack.push(lexemes[i]);
 			IsUnary = true;
 		}
-		else if(lexemes[i] == ")") {
+		else if (lexemes[i] == ")") {
 			while (!stack.empty() && stack.top() != "(") {
 				rpn.push_back(stack.top());
 				stack.pop();
@@ -460,15 +470,17 @@ vector<string> Calc::GetRPN(vector<string> lexemes){
 			stack.pop();
 			IsUnary = false;
 		}
-		else if(IsOperator(lexemes[i])){
+		else if (IsOperator(lexemes[i])) {
 			while (!stack.empty() && (IsFunc(stack.top()) || IsUserFunc(stack.top()) || (Priority(stack.top()) > Priority(lexemes[i])))) {
 				rpn.push_back(stack.top());
 				stack.pop();
 			}
-			if (IsUnary)
+
+			if (IsUnary && lexemes[i] == "-")
 				stack.push("!");
 			else
 				stack.push(lexemes[i]);
+
 			IsUnary = false;
 		}
 	}
